@@ -1,0 +1,15 @@
+# Environment variables
+.env
+.env.local
+
+# System files
+**/.DS_Store
+/.idea/
+/.idea/*
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
