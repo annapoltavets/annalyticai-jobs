@@ -4,7 +4,7 @@ on:
   workflow_dispatch: {}
   
 jobs:
-  e2e_mlops_workflow:
+  etl_workflow:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Data Processing
         run: |
-          python parser
+          python parser/help.py
 
 
 
