@@ -9,8 +9,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -19,6 +17,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          ls -axl
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
