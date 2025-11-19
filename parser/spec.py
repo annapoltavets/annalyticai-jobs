@@ -44,6 +44,7 @@ class TitleEnum(str, Enum):
     GAME_DEVELOPER = "Game Developer"
     MOBILE_DEVELOPER = "Mobile Developer"
     HARDWARE_ENGINEER = "Hardware Engineer"
+    EMBEDDED_FIRMWARE_ENGINEER = "Embedded Engineer"
 
     LEAD_PRINCIPAL_ENGINEER = "Lead/Principal Engineer"
     SOLUTION_ARCHITECT = "Solution Architect"
@@ -120,7 +121,7 @@ SPEC = {
     },
 
     SearchCategory.HARDWARE.value: {
-        'reference_titles': [TitleEnum.HARDWARE_ENGINEER.value, TitleEnum.ROBOTICS_ENGINEER.value],
+        'reference_titles': [TitleEnum.HARDWARE_ENGINEER.value, TitleEnum.ROBOTICS_ENGINEER.value, TitleEnum.EMBEDDED_FIRMWARE_ENGINEER.value],
         'search': [
             'embedded software engineer',
             'embedded systems developer',
@@ -136,7 +137,8 @@ SPEC = {
             '''Prefer Hardware Engineer for embedded platform bring-up and low-level firmware tightly coupled to boards: 
             Yocto/Device Tree/U-Boot/drivers/BSP, RTOS/bootloader, MCU buses (I²C/SPI/UART/CAN), with clear board ownership.''',
             '''Prefer Robotics Engineer when ROS/ROS2 + MoveIt/OMPL and controls (kinematics/planning/navigation) 
-            or a full autonomy stack (perception + planning + control) on physical robots.'''
+            or a full autonomy stack (perception + planning + control) on physical robots.''',
+            '''Prefer Embedded Engineer when embedded or firmware mentioned in title or description without strong hardware/robotics signals.'''
         ]
     },
 
@@ -244,7 +246,8 @@ SPEC = {
             'Prefer Data Architect when governance/lineage/modeling + platform/reference architectures dominate.',
             'Prefer Database Administrator when backup/recovery/replication/HA + tuning/indexing + engine-specific tooling appear.',
             'Prefer Data Scientist when modeling/evaluation dominate over pipelines/BI.',
-            'Prefer ML Engineer when model training/serving + MLOps pipelines (mlflow|kserve|sagemaker|vertex) + monitoring/drift appear.'
+            'Prefer ML Engineer when model training/serving + MLOps pipelines (mlflow|kserve|sagemaker|vertex) + monitoring/drift appear.',
+            'Prefer Data Engineer if PL/SQL or Oracle developer or T-SQL developer signals dominate over modeling/analysis.'
         ]
     },
 

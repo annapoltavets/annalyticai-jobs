@@ -20,6 +20,8 @@ def load_data(folder_path: str, subset: list = None) -> pd.DataFrame:
         df = pd.read_json(file_path, lines=True)
         df['file_name'] = file
         dataframes.append(df)
+    if dataframes == []:
+        return pd.DataFrame()
 
     df = pd.concat(dataframes, ignore_index=True)
     if subset != None:
@@ -31,7 +33,8 @@ def load_dir(folder_path: str, subdirs, subset: list = None) -> pd.DataFrame:
     for dr in subdirs:
         if os.path.exists(f'{folder_path}/{dr}'):
             parsed_df = load_data(f'{folder_path}/{dr}', subset=subset)
-            parsed.append(parsed_df)
+            if not parsed_df.empty:
+                parsed.append(parsed_df)
     return pd.concat(parsed, ignore_index=True)
 
 

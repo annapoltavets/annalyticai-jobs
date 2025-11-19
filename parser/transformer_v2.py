@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pandas as pd
-from openai_client import OpenAIClient
 from rapidapi_client import RapidApiClient
 from similarity import SimilarityService
 from utils import load_data, generate_hash, load_dir
@@ -59,7 +58,6 @@ class Transformer:
          .incremental_job_id_filter()
          .normalize_job_highlights_json()
          .process_desc_df()
-         .find_similar_descriptions(similarity_threads)
          .process_job_df()
          .save_normalized()
          .update_reposted_date()
@@ -109,7 +107,7 @@ class Transformer:
                                  'search']].copy()
 
         desc_df['qual_qualifier'] = desc_df['qualifications'].apply(
-            lambda x: ', '.join(x) if isinstance(x, list) else '')
+            lambda x: '; '.join(x) if isinstance(x, list) else '')
 
         # deduplicate with job_description
         desc_df = (desc_df
@@ -173,13 +171,19 @@ class Transformer:
 
         self.desc_df = pd.read_json(f'{NORM_DIR}/{self.data_date}/rapid_desc.json', lines=True)
         self.desc_df['job_posted_date'] = pd.to_datetime(self.desc_df['job_posted_date'], unit='ms').dt.date
+        if 'date_reposted_from' not in self.desc_df.columns:
+            self.desc_df['date_reposted_from'] = None
         print(f'Normalized loaded: {self.job_df.shape}, {self.desc_df.shape}')
+        self.days = self.desc_df[self.desc_df['date_reposted_from'].isna()]['job_posted_date'].astype(str).unique().tolist()
+        print(f'Days: {self.days}')
         return self
 
     def desc_df_by_date(self, data_date: str = None):
         output_folder = f'{PARSED_DIR}/{str(data_date)}'
         os.makedirs(output_folder, exist_ok=True)
+        parsed = load_dir(PARSED_DIR, self.days, subset=['job_description_id'])['job_description_id']
         df = self.desc_df[
+            (~self.desc_df['job_description_id'].isin(parsed)) &
             (self.desc_df['date_reposted_from'].isna()) &
             (self.desc_df['job_posted_date'].astype(str) == data_date) &
             (~self.desc_df['job_description_id'].isin(self.fact_df['job_description_id']))
@@ -199,18 +203,17 @@ class Transformer:
             print(f'Updated {FACT_DIR}/{f}')
         return self
 
-    def parse_desc(self):
+    def parse_desc(self, limit: int = 2_300_000):
         self.days = self.desc_df[self.desc_df['date_reposted_from'].isna()]['job_posted_date'].astype(str).unique().tolist()
         print(f'Days to process: {self.days}')
-        openai = OpenAIClient()
 
         for day in self.days:
             output_folder, df = self.desc_df_by_date(day)
             print(f'Parse {day} with {df.shape[0]} rows')
             parser = JobParser()
             parser.run_parser(output_folder, df, max_workers=5, chunk_size=50, limit=5000)
-            i, o = openai.get_usage_data()
-            if (i + o > 2_300_000):
+            i, o = parser.client.get_usage_data()
+            if (i + o > limit):
                 print(f"Reached daily limit ({i}, {o}), stopping further processing.")
                 break
         return self
@@ -225,8 +228,8 @@ class Transformer:
         merged_df = parsed_df.merge(ddf, on=['job_description_id'], how='inner', suffixes=('', '_original'))
         merged_df = merged_df.merge(jdf, on=['job_id'], how='inner', suffixes=('', '_y'))
         merged_df = merged_df[FACT_COLUMNS]
-        merged_df = merged_df[~merged_df['job_id'].isin(self.fact_df['job_id'])]
-        merged_df = merged_df[~merged_df['job_description_id'].isin(self.fact_df['job_description_id'])]
+        #merged_df = merged_df[~merged_df['job_id'].isin(self.fact_df['job_id'])]
+        #merged_df = merged_df[~merged_df['job_description_id'].isin(self.fact_df['job_description_id'])]
         print(f'Merged fact {merged_df.shape}')
 
         merged_df.to_json(f'{FACT_DIR}/{self.data_date}_jobs.json', orient="records", lines=True)
@@ -235,28 +238,5 @@ class Transformer:
 
 
 if __name__ == "__main__":
-    # t = Transformer('2025-09-28')
-    # (t.load_rapid_extraction()
-    # .load_normalized()
-    # .update_reposted_date()
-    #  .merge_fact()
-    #  )
-    # t = Transformer('2025-09-28')
-    # t.load_normalized()
-    # days = t.desc_df[t.desc_df['date_reposted_from'].isna()]['job_posted_date'].astype(str).unique().tolist()
-    # df = load_dir(PARSED_DIR, days, ['job_description_id'])
-    # print(df.shape)
-
-    t = Transformer('2025-10-11')
-    t.etl(False)
-
-    # print(f'Start time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-    #
-    # (t.load_rapid_extraction()
-    #  .incremental_job_id_filter()
-    #  .normalize_job_highlights_json()
-    #  .process_desc_df()
-    #  .find_similar_descriptions(1000)
-    #  .process_job_df()
-    #  .save_normalized()
-    #  )
+    t = Transformer('2025-11-18')
+    t.etl(period='3days')
