@@ -1,4 +1,4 @@
-name: MLops CI
+name: Run etl
 
 on:
   workflow_dispatch: {}
@@ -24,6 +24,3 @@ jobs:
       - name: Run Data Processing
         run: |
           python parser/help.py
-
-
-
